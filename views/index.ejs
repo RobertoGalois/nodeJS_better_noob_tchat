@@ -4,57 +4,123 @@
   <meta charset="utf-8" />
   <title>Super tchat</title>
   <style>
-  div#content {
+  body {
+	  font-family: verdana;
+	  font-size: 1em;
+	  margin: 0px;
+	  padding: 0px;
+	  width: 100%;
+	  height: 100%;
+  }
+
+  h1 {
+	  text-decoration: underline;
+	  font-size: 2em;
+	  margin: 0px;
+  }
+
+  h2 {
+	  text-decoration: underline;
+	  font-size: 1.3em;
+  }
+
+  header {
+	  background-color: azure;
+	  border: black 1px dashed;
+	  width: calc(100% - 42px);
+	  height: 180px;
+	  padding: 10px;
+	  margin: 10px;
+  }
+
+  section#content {
 	  background-color: lightblue;
 	  border: black 1px solid;
-	  width: calc(100% - 20px);
-      height: 300px;
+	  width: calc(100% - 42px);
+      height: 350px;
 	  overflow: auto;
 	  padding: 10px;
+	  margin: 10px;
   }
+
+  input#message {
+	 width: calc(100% - 15px);
+  }
+
 
   section.showPseudo {
 	  text-decoration: underline;
 	  font-weight: bold;
   }
 
-  section.showMessage {
-
+  section.showPseudo span {
+	  font-weight: normal;
+	  font-style: italic;
   }
+
+  section.showMessage {
+	  background-color: #b8ecf2;
+	  border: black 1px dashed;
+	  margin-top: 5px;
+	  padding: 5px;
+  }
+
+  section.newUser {
+	  font-style:italic;
+  }
+
   </style>
  </head>
  <body>
-  <h1>Super tchat</h1>
-   <p>Pseudo: <input type="text" id="pseudo" /></p>
-   <p>Message: <input type="text" id="message" /></p>
+  <header>
+   <h1>[Super tchat]</h1>
+   <h2>Pseudo: </h2>
+   <p><input type="text" id="message" maxlength="80" placeholder="Message (80 caractères maximum)" /></p>
    <p><button id="sendMessage">Send message</button></p>
-   <div id="content"></div>
-   <script src="./jq.js"></script>
-   <script src="/socket.io/socket.io.js"></script>
-   <script>
+  </header>
+  <section id="content">&nbsp;</section>
+  <script src="./jq.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
 	const socket = io();
 	const pseudoInput = $('input#pseudo');
-	const messageInput = $('input#message'); 
+	const messageInput = $('input#message');
 
-	pseudo = prompt('Entrez votre pseudo:');
-	pseudoInput.select();
-	messageInput.on('keydown', function (e) {
-		if (e.keyCode === 13) {
-			window.document.querySelector('button#sendMessage').click();
-		}
+	inputPseudo = '';
+	while (inputPseudo === '') {
+		inputPseudo = prompt('Entrez votre pseudo (entre 1 et 30 caractères maximum):');
+	}
+
+	inputPseudo = inputPseudo.substring(0, 30);
+   	socket.emit('newUser', { pseudo: inputPseudo });
+	$('title').append(' - [' + inputPseudo + ']');
+
+	$(function () {
+		$('h2').append(inputPseudo);
+		$('input#message').select();
+
+		messageInput.on('keydown', function (e) {
+			if (e.keyCode === 13) {
+				$('button#sendMessage').click();
+			}
+		});
+
+   	 	$('button#sendMessage').click(function () {
+   	 		socket.emit('sendMessage', { pseudo: inputPseudo, message: $('input#message').val() });
+			messageInput.val('').select();
+   	 	});
+
+		socket.on('newMessage', function (datas) {
+			if (datas !== null) {
+				$('section#content').prepend($('<section class="showPseudo">[' + datas.pseudo + '] <span class="dateTime">(le 10/10/2019 à 11h30)<span></section><section class="showMessage">' + datas.message + '</section><hr />'));
+			}
+		});
+
+		socket.on('newUser', function (datas) {
+			$('section#content').prepend($('<section class="newUser">--> [' + datas.pseudo + '] vient d\'arriver sur le tchat !<hr />'));
+			console.log('salut !');
+		});
 	});
-
-    $('button#sendMessage').click(function () {
-    	socket.emit('sendMessage', { pseudo: window.document.querySelector('input#pseudo').value, message: window.document.querySelector('input#message').value});
-		messageInput.val('').select();
-    });
-
-	socket.on('newMessage', function (datas) {
-		if (datas !== null) {
-			$('div#content').prepend($('<section class="showPseudo">' + datas.pseudo + '</section><section class="showMessage">' + datas.message + '</section><hr />'));
-		}
-	});
-
   </script>
  </body>
 </html>

@@ -1,0 +1,12 @@
+- stocker le pseudo dans une variable de session ==> utiliser express-session
+- faire en sorte que les messages du user apparaissent differemment.
+- rendre le code plus propre
+- afficher un message quand une personne se déconnecte
+- sauvegarder les 30 derniers messages dans un array pour les retrouver au prochain log
+
+(- option: gérer l'ajout de smileys
+  -> d'abord en basique, genre remplacer les :), les :(, les :/, :|, :D, XD par des images correspondantes, a faire dans le front
+  -> ensuite, carrément le proposer dans le input#message, qui deviendra peut-être carrément un textarea
+)
+
+

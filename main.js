@@ -23,8 +23,15 @@ app.get('/', (req, res) => {
 
 io.sockets.on('connection', function (socket) {
 	socket.on('sendMessage', function (datas) {
-		io.emit('newMessage', {pseudo: entities.encode(datas.pseudo), message: entities.encode(datas.message)});
 		console.log(datas);
+		if ((datas.pseudo.trim() !== '') && (datas.message.trim() !== '')) {
+			io.emit('newMessage', { pseudo: entities.encode(datas.pseudo.substring(0, 29)), message: entities.encode(datas.message.substring(0, 79)) });
+		}
+	});
+
+	socket.on('newUser', function (datas) {
+		console.log('--> Nouvel User: [' + datas.pseudo + ']');
+		io.emit('newUser', { pseudo: entities.encode(datas.pseudo.substring(0, 29)) });
 	});
 });
 
