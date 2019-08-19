@@ -1,6 +1,7 @@
 const express = require('express');
 const socketIO = require('socket.io');
 const entities = new (require('html-entities').AllHtmlEntities)();
+const session = require('express-session');
 
 const app = express();
 const server = app.listen(8080);
@@ -8,6 +9,19 @@ const io = socketIO.listen(server);
 
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
+app.user(session({
+	secret: 'passphrase_secret',
+	resave: false,
+	saveUninitialized: true,
+	cookie: { 
+		path: '/',
+		httpOnly: 'true',
+		saveUninitialized: true,
+		sameSite: true,
+		secure: false,			//because I use http #noob
+		maxAge: 15552000000		//6 months
+	}
+}));
 
 app.get('/', (req, res) => {
 	res.status(200).setHeader('Content-Type', 'text/html');
