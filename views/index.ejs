@@ -83,20 +83,19 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
 	const socket = io();
-	const pseudoInput = $('input#pseudo');
 	const messageInput = $('input#message');
 
-	inputPseudo = '';
-	while (inputPseudo === '') {
-		inputPseudo = prompt('Entrez votre pseudo (entre 1 et 30 caractères maximum):');
+	function formatDateTime(value) {
+		value = parseInt(value);
+
+		if (value < 10) { 
+			return ('0' + value);
+		}
+
+		return (value);
 	}
 
-	inputPseudo = inputPseudo.substring(0, 30);
-   	socket.emit('newUser', { pseudo: inputPseudo });
-	$('title').append(' - [' + inputPseudo + ']');
-
 	$(function () {
-		$('h2').append(inputPseudo);
 		$('input#message').select();
 
 		messageInput.on('keydown', function (e) {
@@ -106,19 +105,25 @@
 		});
 
    	 	$('button#sendMessage').click(function () {
-   	 		socket.emit('sendMessage', { pseudo: inputPseudo, message: $('input#message').val() });
+   	 		socket.emit('sendMessage', { message: $('input#message').val() });
 			messageInput.val('').select();
    	 	});
 
 		socket.on('newMessage', function (datas) {
 			if (datas !== null) {
-				$('section#content').prepend($('<section class="showPseudo">[' + datas.pseudo + '] <span class="dateTime">(le 10/10/2019 à 11h30)<span></section><section class="showMessage">' + datas.message + '</section><hr />'));
+				let nowDate = new Date();
+				$('section#content').prepend($('<section class="showPseudo">[' + datas.pseudo + '] <span class="dateTime">(le ' + formatDateTime(nowDate.getDate()) + '/' + formatDateTime((nowDate.getMonth() + 1)) + '/' + formatDateTime(nowDate.getFullYear()) + ' à ' + formatDateTime(nowDate.getHours()) + 'h' + formatDateTime(nowDate.getMinutes()) + ')<span></section><section class="showMessage">' + datas.message + '</section><hr />'));
 			}
 		});
 
 		socket.on('newUser', function (datas) {
 			$('section#content').prepend($('<section class="newUser">--> [' + datas.pseudo + '] vient d\'arriver sur le tchat !<hr />'));
-			console.log('salut !');
+		});
+
+		socket.on('sentPseudo', function (datas) {
+			$('h2').append(datas.pseudo);	
+			$('title').append(' - [' + datas.pseudo + ']');
+   			socket.emit('newUser');
 		});
 	});
   </script>
