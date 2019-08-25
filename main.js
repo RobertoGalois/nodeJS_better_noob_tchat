@@ -14,7 +14,7 @@ const sessionMiddleware = session({
 	secret: 'bretelle d\'emmerdes',
 	resave: false,
 	saveUninitialized: true,
-	cookie: { 
+	cookie: {
 		path: '/',
 		httpOnly: 'true',
 		saveUninitialized: true,
@@ -88,6 +88,7 @@ io.sockets.on('connection', function (socket) {
 	socket.emit('sentPseudo', { pseudo: secureString(socket.request.session.pseudo) });
 
 	socket.on('sendMessage', function (datas) {
+		console.log(secureString(socket.request.session.pseudo) + ' SENDS ')
 		console.log(datas);
 		if ((checkPseudo(socket.request.session.pseudo)) && (checkMessage(datas.message))) {
 			io.emit('newMessage', { pseudo: secureString(socket.request.session.pseudo), message: entities.encode(datas.message.substring(0, 79)).trim() });
@@ -95,11 +96,18 @@ io.sockets.on('connection', function (socket) {
 	});
 
 	socket.on('newUser', function (datas) {
-		let securePseudo = entities.encode(socket.request.session.pseudo);
+		let securePseudo = secureString(socket.request.session.pseudo);
 
-		console.log('--> Nouvel User: [' + socket.request.session.pseudo + ']');
+		console.log('--> Nouvel User: [' + securePseudo + ']');
 		io.emit('newUser', { pseudo: securePseudo });
 		socket.request.session.pseudo = securePseudo;
+	});
+
+	socket.on('disconnect', function (datas) {
+		let securePseudo = secureString(socket.request.session.pseudo);
+
+		console.log('Deconnection de ' + securePseudo);
+		io.emit('leftUser', { pseudo: securePseudo });
 	});
 });
 
@@ -109,9 +117,9 @@ io.sockets.on('connection', function (socket) {
 /*******************/
 function checkSession(req) {
 	if (typeof (req.session.pseudo) !== typeof('pouet')) {
-		return false;	
+		return false;
 	}
-	
+
 	return true;
 }
 

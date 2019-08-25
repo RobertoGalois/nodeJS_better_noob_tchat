@@ -1,10 +1,6 @@
-- regler le probleme de refresh du tchat qui envoit le log a tout le monde et fout le bordel au niveau du pseudo
-- faire en sorte que les messages du user apparaissent differemment.
-- rendre le code plus propre
+- faire en sorte que les messages du user apparaissent differemment
+  --> mettre un id dans la session, id qui est toujours different = variable partagee entre les differents users
 - afficher un message quand une personne se déconnecte
 - sauvegarder les 30 derniers messages dans un array pour les retrouver au prochain log
-- securiser les inputs pour etre sur que ca soit safe
-  pour resumer les inputs sont: 
-  - pseudo du user ==> le slice lors de son entrée avant le stockage session, puis le htmlentities à chaque output du backend
-  - messages du user ==> le htmlEntities a chaque output du backend
+- faire en sorte que quand on refresh ca previent pas qu'on entre sur le tchat ==> considerer qu'on entre ou quitte le tchat en killant la session, ou alors si la difference de temps est > 30s.
 
