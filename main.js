@@ -8,6 +8,9 @@ const session = require('express-session');
 const app = express();
 const server = app.listen(8080);
 const io = socketIO.listen(server);
+
+var gl_messages = [];
+
 /*
 ** to access to req.session throught socket
 */
@@ -93,10 +96,23 @@ io.sockets.on('connection', function (socket) {
 	socket.emit('sentPseudo', { pseudo: secureString(socket.handshake.session.pseudo) });
 
 	socket.on('sendMessage', function (datas) {
-		console.log(secureString(socket.handshake.session.pseudo) + ' SENDS ')
+		let securePseudo = secureString(socket.handshake.session.pseudo);
+		let secureMsg = secureString(datas.message.substring(0, 79).trim());
+
+		console.log(securePseudo + ' SENDS ')
 		console.log(datas);
-		if ((checkPseudo(socket.handshake.session.pseudo)) && (checkMessage(datas.message))) {
-			io.emit('newMessage', { pseudo: secureString(socket.handshake.session.pseudo), message: entities.encode(datas.message.substring(0, 79)).trim() });
+		if ((checkPseudo(securePseudo)) && (checkMessage(secureMsg))) {
+			io.emit('newMessage', { pseudo: securePseudo, message: secureMsg });
+
+			updateGlMessages({
+				type: 'message',
+				pseudo: securePseudo,
+				message: secureMsg,
+				timestamp: Date.now()
+			});
+
+			console.log('==============');
+			console.log(gl_messages);
 		}
 	});
 
@@ -107,6 +123,10 @@ io.sockets.on('connection', function (socket) {
 			console.log('--> Nouvel User: [' + securePseudo + ']');
 			if (checkLastTchatInOut(socket.handshake.session.lastTchatIn, 10000) === true) {
 				io.emit('newUser', { pseudo: securePseudo });
+				updateGlMessages({
+					type: 'notif_connection',
+					pseudo: securePseudo,
+				});
 			}
 
 			socket.handshake.session.lastTchatIn = Date.now();
@@ -121,11 +141,19 @@ io.sockets.on('connection', function (socket) {
 			console.log('Deconnection de ' + securePseudo);
 			if (checkLastTchatInOut(socket.handshake.session.lastTchatOut, 10000) === true) {
 				io.emit('leftUser', { pseudo: securePseudo });
+				updateGlMessages({
+					type: 'notif_disconnection',
+					pseudo: securePseudo,
+				});
 			}
 
 			socket.handshake.session.lastTchatOut = Date.now();
 			socket.handshake.session.save();
 		}
+	});
+
+	socket.on('getLastMessages', function () {
+		socket.emit('sendsLastMessages', {messages: gl_messages } );
 	});
 });
 
@@ -179,3 +207,7 @@ function checkLastTchatInOut(pTime, pTimeInterval) {
 	return false;
 }
 
+function updateGlMessages(pushedMessage) {
+	gl_messages.unshift(pushedMessage);
+	gl_messages = gl_messages.slice(0, 30);
+}

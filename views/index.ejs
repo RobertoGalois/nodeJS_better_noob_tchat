@@ -132,6 +132,11 @@
 			$('h2').append(datas.pseudo);
 			$('title').append(' - [' + datas.pseudo + ']');
    			socket.emit('newUser');
+   			socket.emit('getLastMessages');
+		});
+
+		socket.on('sendsLastMessages', function (datas) {
+			console.log(datas.messages);
 		});
 	});
 
