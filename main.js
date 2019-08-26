@@ -1,8 +1,9 @@
 const express = require('express');
-const session = require('express-session');
 const socketIO = require('socket.io');
 const entities = new (require('html-entities').AllHtmlEntities)();
 const bodyParser = require('body-parser');
+const sharedSession = require('express-socket.io-session');
+const session = require('express-session');
 
 const app = express();
 const server = app.listen(8080);
@@ -12,7 +13,7 @@ const io = socketIO.listen(server);
 */
 const sessionMiddleware = session({
 	secret: 'bretelle d\'emmerdes',
-	resave: false,
+	resave: true,
 	saveUninitialized: true,
 	cookie: {
 		path: '/',
@@ -32,12 +33,16 @@ app.use(express.static('public'));
 app.use(sessionMiddleware);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+io.use(sharedSession(sessionMiddleware, {
+	autoSave: true
+}));
+
 /*
-** to access to req.session throught socket
+io.of('/namespace').use(sharedSession(session, {
+    autoSave: true
+}));
 */
-io.use(function (socket, next) {
-	sessionMiddleware(socket.request, socket.request.res, next);
-});
 
 /**************************/
 /**** ROUTE management ****/
@@ -85,30 +90,42 @@ app.get('/', (req, res) => {
 /**** SOCKET management ****/
 /***************************/
 io.sockets.on('connection', function (socket) {
-	socket.emit('sentPseudo', { pseudo: secureString(socket.request.session.pseudo) });
+	socket.emit('sentPseudo', { pseudo: secureString(socket.handshake.session.pseudo) });
 
 	socket.on('sendMessage', function (datas) {
-		console.log(secureString(socket.request.session.pseudo) + ' SENDS ')
+		console.log(secureString(socket.handshake.session.pseudo) + ' SENDS ')
 		console.log(datas);
-		if ((checkPseudo(socket.request.session.pseudo)) && (checkMessage(datas.message))) {
-			io.emit('newMessage', { pseudo: secureString(socket.request.session.pseudo), message: entities.encode(datas.message.substring(0, 79)).trim() });
+		if ((checkPseudo(socket.handshake.session.pseudo)) && (checkMessage(datas.message))) {
+			io.emit('newMessage', { pseudo: secureString(socket.handshake.session.pseudo), message: entities.encode(datas.message.substring(0, 79)).trim() });
 		}
 	});
 
 	socket.on('newUser', function (datas) {
-		let securePseudo = secureString(socket.request.session.pseudo);
+		let securePseudo = secureString(socket.handshake.session.pseudo);
 
-		console.log('--> Nouvel User: [' + securePseudo + ']');
-		//if (checkLastTchatIn(socket.request.session.lastTchatIn) === true) {
-			io.emit('newUser', { pseudo: securePseudo });
-	//	}
+		if (checkPseudo(securePseudo)) {
+			console.log('--> Nouvel User: [' + securePseudo + ']');
+			if (checkLastTchatInOut(socket.handshake.session.lastTchatIn, 10000) === true) {
+				io.emit('newUser', { pseudo: securePseudo });
+			}
+
+			socket.handshake.session.lastTchatIn = Date.now();
+			socket.handshake.session.save();
+		}
 	});
 
 	socket.on('disconnect', function (datas) {
-		let securePseudo = secureString(socket.request.session.pseudo);
+		let securePseudo = secureString(socket.handshake.session.pseudo);
 
-		console.log('Deconnection de ' + securePseudo);
-		io.emit('leftUser', { pseudo: securePseudo });
+		if (checkPseudo(securePseudo)) {
+			console.log('Deconnection de ' + securePseudo);
+			if (checkLastTchatInOut(socket.handshake.session.lastTchatOut, 10000) === true) {
+				io.emit('leftUser', { pseudo: securePseudo });
+			}
+
+			socket.handshake.session.lastTchatOut = Date.now();
+			socket.handshake.session.save();
+		}
 	});
 });
 
@@ -125,7 +142,8 @@ function checkSession(req) {
 }
 
 function checkPseudo(inputPseudo) {
-	if (inputPseudo.trim() !== '') {
+	if ((typeof (inputPseudo) === typeof ('pouet'))
+		&& (inputPseudo.trim() !== '')) {
 		return true;
 	}
 
@@ -144,13 +162,19 @@ function secureString(str) {
 	return (entities.encode(str).trim());
 }
 
-function checkLastTchatIn(time) {
+function checkLastTchatInOut(pTime, pTimeInterval) {
 	let nowTime = Date.now();
 
-	if ((typeof (time) === typeof (nowTime))
-		&& ((nowTime - time) > 1)) {
+	/*
+	** if pTime is undefined,
+	** or if it is a timestamp and is older than 10 seconds from now
+	*/
+	if ((typeof (pTime) === 'undefined')
+		|| ((typeof (pTime) === typeof (nowTime))
+			&& ((nowTime - pTime) > pTimeInterval))) {
 		return true;
 	}
 
 	return false;
 }
+
