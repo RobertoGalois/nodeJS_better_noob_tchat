@@ -151,7 +151,8 @@ function checkPseudo(inputPseudo) {
 }
 
 function checkMessage(inputMessage) {
-	if (inputMessage.trim() !== '') {
+	if ((typeof (inputMessage) === typeof ('pouet'))
+		&& (inputMessage.trim() !== '')) {
 		return true;
 	}
 
