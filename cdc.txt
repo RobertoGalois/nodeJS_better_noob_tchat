@@ -1,6 +1,14 @@
 - faire en sorte que les messages du user apparaissent differemment
   --> mettre un id dans la session, id qui est toujours different = variable partagee entre les differents users
-- afficher un message quand une personne se déconnecte
+
 - sauvegarder les 30 derniers messages dans un array pour les retrouver au prochain log
-- faire en sorte que quand on refresh ca previent pas qu'on entre sur le tchat ==> considerer qu'on entre ou quitte le tchat en killant la session, ou alors si la difference de temps est > 30s.
+  --> problematique des variables accessibles pour toutes les personnes
+
+- faire en sorte que quand on refresh en masse, ca previent pas qu'on entre sur le tchat, pour eviter le flood
+
+  ==> concernant l'info comme quoi on arrive, en fait, le mieux c'est de stocker dans la session la date de derniere connexion dans un timestamp
+      si ce temps de derniere connection < 15s, ==> ne rien faire et stocker la nouvelle valeur de ce temps, sinon dire qu'on est arrivé sur le tchat
+
+  ==> de la meme maniere, pour la deconnexion, stocker le timestamp de la derniere deconnexion, si la date de derniere deconnexion < 15s, ne rien dire et stocker la nouvelle valeur
+      sinon, stocker egalement la valeur et prevenir qu'untel s'est deconnecté du tchat
 

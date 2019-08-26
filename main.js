@@ -99,8 +99,9 @@ io.sockets.on('connection', function (socket) {
 		let securePseudo = secureString(socket.request.session.pseudo);
 
 		console.log('--> Nouvel User: [' + securePseudo + ']');
-		io.emit('newUser', { pseudo: securePseudo });
-		socket.request.session.pseudo = securePseudo;
+		//if (checkLastTchatIn(socket.request.session.lastTchatIn) === true) {
+			io.emit('newUser', { pseudo: securePseudo });
+	//	}
 	});
 
 	socket.on('disconnect', function (datas) {
@@ -141,4 +142,15 @@ function checkMessage(inputMessage) {
 
 function secureString(str) {
 	return (entities.encode(str).trim());
+}
+
+function checkLastTchatIn(time) {
+	let nowTime = Date.now();
+
+	if ((typeof (time) === typeof (nowTime))
+		&& ((nowTime - time) > 1)) {
+		return true;
+	}
+
+	return false;
 }
