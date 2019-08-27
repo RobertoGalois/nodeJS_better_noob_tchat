@@ -1,5 +1,2 @@
 - faire en sorte que les messages du user apparaissent differemment
   --> mettre un id dans la session, id qui est toujours different = variable partagee entre les differents users
-
-- sauvegarder les 30 derniers messages dans un array pour les retrouver au prochain log
-  --> problematique des variables accessibles pour toutes les personnes

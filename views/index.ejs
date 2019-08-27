@@ -124,7 +124,6 @@
 		});
 
 		socket.on('leftUser', function (datas) {
-			console.log('a+');
 			$('section#content').prepend($('<section class="newUser">--> [' + datas.pseudo + '] a quitté le tchat !<hr />'));
 		});
 
@@ -136,7 +135,16 @@
 		});
 
 		socket.on('sendsLastMessages', function (datas) {
-			console.log(datas.messages);
+			let messages = datas.messages;
+
+			for (let i = 0; i < messages.length; i++) {
+				switch (messages[i].type) {
+					case 'message':
+						let msgDate = new Date(messages[i].timestamp);
+						$('section#content').append($('<section class="showPseudo">[' + messages[i].pseudo + '] <span class="dateTime">(le ' + formatDateTime(msgDate.getDate()) + '/' + formatDateTime((msgDate.getMonth() + 1)) + '/' + formatDateTime(msgDate.getFullYear()) + ' à ' + formatDateTime(msgDate.getHours()) + 'h' + formatDateTime(msgDate.getMinutes()) + ')<span></section><section class="showMessage">' + messages[i].message + '</section><hr />'));
+						break;
+				}
+			}
 		});
 	});
 

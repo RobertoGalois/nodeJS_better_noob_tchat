@@ -41,12 +41,6 @@ io.use(sharedSession(sessionMiddleware, {
 	autoSave: true
 }));
 
-/*
-io.of('/namespace').use(sharedSession(session, {
-    autoSave: true
-}));
-*/
-
 /**************************/
 /**** ROUTE management ****/
 /**************************/
@@ -153,7 +147,7 @@ io.sockets.on('connection', function (socket) {
 	});
 
 	socket.on('getLastMessages', function () {
-		socket.emit('sendsLastMessages', {messages: gl_messages } );
+		socket.emit('sendsLastMessages', { messages: gl_messages } );
 	});
 });
 
