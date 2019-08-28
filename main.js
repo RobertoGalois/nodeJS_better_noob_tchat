@@ -10,6 +10,7 @@ const server = app.listen(8080);
 const io = socketIO.listen(server);
 
 var gl_messages = [];
+var gl_newUserId = 0;
 
 /*
 ** to access to req.session throught socket
@@ -72,6 +73,8 @@ app.get('/', (req, res) => {
 		&& (typeof (req.body.pseudo) === typeof ('pouet'))
 		&& (req.body.pseudo.trim() !== '')) {
 			req.session.pseudo = req.body.pseudo.trim();
+			req.session.userId = gl_newUserId;
+			gl_newUserId++;
 	}
 
 	res.status(200).redirect('/');
@@ -87,20 +90,22 @@ app.get('/', (req, res) => {
 /**** SOCKET management ****/
 /***************************/
 io.sockets.on('connection', function (socket) {
-	socket.emit('sentPseudo', { pseudo: secureString(socket.handshake.session.pseudo) });
+	socket.emit('sentPseudo', { pseudo: secureString(socket.handshake.session.pseudo), userId: socket.handshake.session.userId });
 
 	socket.on('sendMessage', function (datas) {
 		let securePseudo = secureString(socket.handshake.session.pseudo);
 		let secureMsg = secureString(datas.message.substring(0, 79).trim());
+		let userId = socket.handshake.session.userId;
 
-		console.log(securePseudo + ' SENDS ')
+		console.log(securePseudo + '(' + userId + ') SENDS ')
 		console.log(datas);
 		if ((checkPseudo(securePseudo)) && (checkMessage(secureMsg))) {
-			io.emit('newMessage', { pseudo: securePseudo, message: secureMsg });
+			io.emit('newMessage', { pseudo: securePseudo, message: secureMsg, userId: userId });
 
 			updateGlMessages({
 				type: 'message',
 				pseudo: securePseudo,
+				userId: userId,
 				message: secureMsg,
 				timestamp: Date.now()
 			});
@@ -114,13 +119,9 @@ io.sockets.on('connection', function (socket) {
 		let securePseudo = secureString(socket.handshake.session.pseudo);
 
 		if (checkPseudo(securePseudo)) {
-			console.log('--> Nouvel User: [' + securePseudo + ']');
+			console.log('--> Nouvel User: [' + securePseudo + '](' + secureId(socket.handshake.session.userId) + ')');
 			if (checkLastTchatInOut(socket.handshake.session.lastTchatIn, 10000) === true) {
 				io.emit('newUser', { pseudo: securePseudo });
-				updateGlMessages({
-					type: 'notif_connection',
-					pseudo: securePseudo,
-				});
 			}
 
 			socket.handshake.session.lastTchatIn = Date.now();
@@ -135,10 +136,6 @@ io.sockets.on('connection', function (socket) {
 			console.log('Deconnection de ' + securePseudo);
 			if (checkLastTchatInOut(socket.handshake.session.lastTchatOut, 10000) === true) {
 				io.emit('leftUser', { pseudo: securePseudo });
-				updateGlMessages({
-					type: 'notif_disconnection',
-					pseudo: securePseudo,
-				});
 			}
 
 			socket.handshake.session.lastTchatOut = Date.now();
@@ -183,6 +180,14 @@ function checkMessage(inputMessage) {
 
 function secureString(str) {
 	return (entities.encode(str).trim());
+}
+
+function secureId(pId) {
+	if (typeof (pId) === typeof (42)) {
+		return pId;
+	}
+
+	return -1;
 }
 
 function checkLastTchatInOut(pTime, pTimeInterval) {

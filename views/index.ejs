@@ -58,6 +58,14 @@
 	  font-style: italic;
   }
 
+  section.message {
+	  width: 80%;
+  }
+
+  section.userMessage {
+	  background-color: red;
+  }
+
   section.showMessage {
 	  background-color: #b8ecf2;
 	  border: black 1px dashed;
@@ -84,6 +92,7 @@
   <script>
 	const socket = io();
 	const messageInput = $('input#message');
+	var   gl_userId = -1;
 
 	function formatDateTime(value) {
 		value = parseInt(value);
@@ -112,11 +121,23 @@
 		socket.on('newMessage', function (datas) {
 			if (datas !== null) {
 				let nowDate = new Date();
-				let prependEl = $('<section class="showPseudo">[' + datas.pseudo + '] <span class="dateTime">(le ' + formatDateTime(nowDate.getDate()) + '/' + formatDateTime((nowDate.getMonth() + 1)) + '/' + formatDateTime(nowDate.getFullYear()) + ' à ' + formatDateTime(nowDate.getHours()) + 'h' + formatDateTime(nowDate.getMinutes()) + ')<span></section><section class="showMessage">' + datas.message + '</section><hr />').hide(0);
+				let prependEl = $('<section class="' + ((datas.userId === gl_userId) ? 'userMessage' : 'message')  + '"><section class="showPseudo">[' +
+						datas.pseudo +
+						'] <span class="dateTime">(le ' +
+						formatDateTime(nowDate.getDate()) +
+						'/' + formatDateTime((nowDate.getMonth() + 1)) +
+						'/' + formatDateTime(nowDate.getFullYear()) +
+						' à ' + formatDateTime(nowDate.getHours()) +
+						'h' + formatDateTime(nowDate.getMinutes()) +
+						')</span></section><section class="showMessage">' +
+						datas.message +
+						'</section></section><hr />').hide(0);
 
 				$('section#content').prepend(prependEl);
 				prependEl.show(100);
 			}
+
+			console.log(datas);
 		});
 
 		socket.on('newUser', function (datas) {
@@ -130,6 +151,7 @@
 		socket.on('sentPseudo', function (datas) {
 			$('h2').append(datas.pseudo);
 			$('title').append(' - [' + datas.pseudo + ']');
+			gl_userId = datas.userId;
    			socket.emit('newUser');
    			socket.emit('getLastMessages');
 		});
