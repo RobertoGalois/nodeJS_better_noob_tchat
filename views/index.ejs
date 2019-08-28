@@ -73,7 +73,7 @@
 	  padding: 5px;
   }
 
-  section.newUser {
+  section.notification {
 	  font-style:italic;
   }
 
@@ -92,7 +92,18 @@
   <script>
 	const socket = io();
 	const messageInput = $('input#message');
-	var   gl_userId = -1;
+	const static_getUserId = (function (pId)
+	{
+		let myStaticVar = -1;
+
+		return function (pId) {
+			if(typeof (pId) === typeof (42)) {
+				myStaticVar = pId;
+			}
+
+			return (myStaticVar);
+		};
+	})();
 
 	function formatDateTime(value) {
 		value = parseInt(value);
@@ -102,6 +113,31 @@
 		}
 
 		return (value);
+	}
+
+	function genMsgElToPrepend(pDatas, pDate) {
+		return ($('<section class="' + ((pDatas.userId === static_getUserId()) ? 'userMessage' : 'message')  +
+					'"><section class="showPseudo">[' +
+					pDatas.pseudo +
+					'] <span class="dateTime">(le ' +
+					formatDateTime(pDate.getDate()) +
+					'/' + formatDateTime((pDate.getMonth() + 1)) +
+					'/' + formatDateTime(pDate.getFullYear()) +
+					' à ' + formatDateTime(pDate.getHours()) +
+					'h' + formatDateTime(pDate.getMinutes()) +
+					')</span></section><section class="showMessage">' +
+					pDatas.message +
+					'</section></section><hr />').hide(0));
+	}
+
+	function genNewUserNotifElToPrepend(pDatas) {
+		return ($('section#content').prepend($('<section class="notification">--> [' + pDatas.pseudo +
+				'] vient d\'arriver sur le tchat !<hr />')));
+	}
+
+	function genUserLeftNotifToPrepend(pDatas) {
+		return ($('section#content').prepend($('<section class="notification">--> [' + pDatas.pseudo +
+					'] a quitté le tchat !<hr />')));
 	}
 
 	$(function () {
@@ -121,37 +157,29 @@
 		socket.on('newMessage', function (datas) {
 			if (datas !== null) {
 				let nowDate = new Date();
-				let prependEl = $('<section class="' + ((datas.userId === gl_userId) ? 'userMessage' : 'message')  + '"><section class="showPseudo">[' +
-						datas.pseudo +
-						'] <span class="dateTime">(le ' +
-						formatDateTime(nowDate.getDate()) +
-						'/' + formatDateTime((nowDate.getMonth() + 1)) +
-						'/' + formatDateTime(nowDate.getFullYear()) +
-						' à ' + formatDateTime(nowDate.getHours()) +
-						'h' + formatDateTime(nowDate.getMinutes()) +
-						')</span></section><section class="showMessage">' +
-						datas.message +
-						'</section></section><hr />').hide(0);
+				let prependEl = genMsgElToPrepend(datas, nowDate);
 
 				$('section#content').prepend(prependEl);
 				prependEl.show(100);
 			}
-
-			console.log(datas);
 		});
 
 		socket.on('newUser', function (datas) {
-			$('section#content').prepend($('<section class="newUser">--> [' + datas.pseudo + '] vient d\'arriver sur le tchat !<hr />'));
+			let prependEl = genNewUserNotifElToPrepend(datas);
+
+			$('section#content').prepend(prependEl);
 		});
 
 		socket.on('leftUser', function (datas) {
-			$('section#content').prepend($('<section class="newUser">--> [' + datas.pseudo + '] a quitté le tchat !<hr />'));
+			let prependEl = genLeftUserNotifElToPrepend(datas);
+
+			$('section#content').prepend(prependEl);
 		});
 
 		socket.on('sentPseudo', function (datas) {
 			$('h2').append(datas.pseudo);
 			$('title').append(' - [' + datas.pseudo + ']');
-			gl_userId = datas.userId;
+			static_getUserId(datas.userId);
    			socket.emit('newUser');
    			socket.emit('getLastMessages');
 		});
@@ -163,7 +191,9 @@
 				switch (messages[i].type) {
 					case 'message':
 						let msgDate = new Date(messages[i].timestamp);
-						$('section#content').append($('<section class="showPseudo">[' + messages[i].pseudo + '] <span class="dateTime">(le ' + formatDateTime(msgDate.getDate()) + '/' + formatDateTime((msgDate.getMonth() + 1)) + '/' + formatDateTime(msgDate.getFullYear()) + ' à ' + formatDateTime(msgDate.getHours()) + 'h' + formatDateTime(msgDate.getMinutes()) + ')<span></section><section class="showMessage">' + messages[i].message + '</section><hr />'));
+						let prependEl = genMsgElToPrepend(messages[i], msgDate);
+
+						$('section#content').append(prependEl.show(0));
 						break;
 				}
 			}
