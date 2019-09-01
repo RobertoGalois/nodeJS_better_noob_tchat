@@ -60,10 +60,21 @@
 
   section.message {
 	  width: 80%;
+	  float: left;
+	  margin-top: 10px;
+	  margin-bottom: 10px;
   }
 
   section.userMessage {
-	  background-color: red;
+	  float: right;
+  }
+
+  section.userMessage section.showPseudo {
+	  background-color: lightsteelblue;
+  }
+
+  section.userMessage section.showMessage {
+	  background-color: lightcyan;
   }
 
   section.showMessage {
@@ -74,7 +85,16 @@
   }
 
   section.notification {
+	  width: 100%;
+	  float: left;
 	  font-style:italic;
+  }
+
+  section.notification hr {
+	border: none;
+	color: black;
+	background-color: black;
+	height: 3px;
   }
 
   </style>
@@ -116,7 +136,7 @@
 	}
 
 	function genMsgElToPrepend(pDatas, pDate) {
-		return ($('<section class="' + ((pDatas.userId === static_getUserId()) ? 'userMessage' : 'message')  +
+		return ($('<section class="message' + ((pDatas.userId === static_getUserId()) ? ' userMessage' : '')  +
 					'"><section class="showPseudo">[' +
 					pDatas.pseudo +
 					'] <span class="dateTime">(le ' +
@@ -127,17 +147,17 @@
 					'h' + formatDateTime(pDate.getMinutes()) +
 					')</span></section><section class="showMessage">' +
 					pDatas.message +
-					'</section></section><hr />').hide(0));
+					'</section></section>').hide(0));
 	}
 
 	function genNewUserNotifElToPrepend(pDatas) {
-		return ($('section#content').prepend($('<section class="notification">--> [' + pDatas.pseudo +
-				'] vient d\'arriver sur le tchat !<hr />')));
+		return ($('section#content').prepend($('<section class="notification"><hr />==> [' + pDatas.pseudo +
+				'] vient d\'arriver sur le tchat !<hr /></section>')));
 	}
 
-	function genUserLeftNotifToPrepend(pDatas) {
-		return ($('section#content').prepend($('<section class="notification">--> [' + pDatas.pseudo +
-					'] a quitté le tchat !<hr />')));
+	function genLeftUserNotifElToPrepend(pDatas) {
+		return ($('section#content').prepend($('<section class="notification"><hr />==> [' + pDatas.pseudo +
+					'] a quitté le tchat !<hr /></section>')));
 	}
 
 	$(function () {
