@@ -170,11 +170,11 @@
 		});
 
    	 	$('button#sendMessage').click(function () {
-   	 		socket.emit('sendMessage', { message: $('input#message').val() });
+   	 		socket.emit('csUserMessage', { message: $('input#message').val() });
 			messageInput.val('').select();
    	 	});
 
-		socket.on('newMessage', function (datas) {
+		socket.on('ssNewMessage', function (datas) {
 			if (datas !== null) {
 				let nowDate = new Date();
 				let prependEl = genMsgElToPrepend(datas, nowDate);
@@ -184,27 +184,27 @@
 			}
 		});
 
-		socket.on('newUser', function (datas) {
+		socket.on('ssNewUserNotif', function (datas) {
 			let prependEl = genNewUserNotifElToPrepend(datas);
 
 			$('section#content').prepend(prependEl);
 		});
 
-		socket.on('leftUser', function (datas) {
+		socket.on('ssLeftUserNotif', function (datas) {
 			let prependEl = genLeftUserNotifElToPrepend(datas);
 
 			$('section#content').prepend(prependEl);
 		});
 
-		socket.on('sentPseudo', function (datas) {
+		socket.on('ssUserPseudo', function (datas) {
 			$('h2').append(datas.pseudo);
 			$('title').append(' - [' + datas.pseudo + ']');
 			static_getUserId(datas.userId);
-   			socket.emit('newUser');
-   			socket.emit('getLastMessages');
+   			socket.emit('csNewUserNotif');
+   			socket.emit('csGimmeLastMessages');
 		});
 
-		socket.on('sendsLastMessages', function (datas) {
+		socket.on('ssLastMessages', function (datas) {
 			let messages = datas.messages;
 
 			for (let i = 0; i < messages.length; i++) {

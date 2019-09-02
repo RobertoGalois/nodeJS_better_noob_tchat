@@ -9,8 +9,8 @@ const app = express();
 const server = app.listen(8080);
 const io = socketIO.listen(server);
 
-var gl_messages = [];
-var gl_newUserId = 0;
+var gl_messages = [];	//saves all 30 last sent messages
+var gl_newUserId = 0;	//the id to give to the next new user logged in
 
 /*
 ** to access to req.session throught socket
@@ -70,8 +70,7 @@ app.get('/', (req, res) => {
 /***********/
 .post('/login', (req, res) => {
 	if ((!checkSession(req))
-		&& (typeof (req.body.pseudo) === typeof ('pouet'))
-		&& (req.body.pseudo.trim() !== '')) {
+		&& (checkPseudo(req.body.pseudo) === true)) {
 			req.session.pseudo = req.body.pseudo.trim();
 			req.session.userId = gl_newUserId;
 			gl_newUserId++;
@@ -89,39 +88,60 @@ app.get('/', (req, res) => {
 /***************************/
 /**** SOCKET management ****/
 /***************************/
+/* emit: (ss is for "Server Sends")
+** ----
+** - ssPseudo: send the user's pseudo and id to the client once treated by the server
+** - ssNewMessage: broadcast the new message to all clients
+** - ssNewUserNotif: broadcast the notification that a user is now connected, with his pseudo.
+** - ssLeftUserNotif: broadcast the notification that a user is now disconnected, with his pseudo
+** - ssLastMessages: give to the client the 30 last messages saved in variable gl_messages
+**
+** recieve: (cs is for "Client Sends")
+** -------
+** - csUserMessage: recieve the message the user typed in
+** - csNewUserNotif: recieve the information that the user entered in the tchat and the server might broadcast the information
+** - csGimmeLastMessages: the client wants the 30 last messages
+** - disconnect: when the websocket is disconnected
+*/
 io.sockets.on('connection', function (socket) {
-	socket.emit('sentPseudo', { pseudo: secureString(socket.handshake.session.pseudo), userId: socket.handshake.session.userId });
+	socket.emit('ssUserPseudo', { pseudo: secureString(socket.handshake.session.pseudo), userId: secureId(socket.handshake.session.userId) });
 
-	socket.on('sendMessage', function (datas) {
+	/*
+	** csUserMessage:
+	*/
+	socket.on('csUserMessage', function (datas) {
 		let securePseudo = secureString(socket.handshake.session.pseudo);
 		let secureMsg = secureString(datas.message.substring(0, 79).trim());
-		let userId = socket.handshake.session.userId;
+		let secureUserId = secureId(socket.handshake.session.userId);
 
-		console.log(securePseudo + '(' + userId + ') SENDS ')
+		console.log(securePseudo + '(' + secureUserId + ') SENDS ')
 		console.log(datas);
+
 		if ((checkPseudo(securePseudo)) && (checkMessage(secureMsg))) {
-			io.emit('newMessage', { pseudo: securePseudo, message: secureMsg, userId: userId });
+			io.emit('ssNewMessage', { pseudo: securePseudo, message: secureMsg, userId: secureUserId });
 
 			updateGlMessages({
 				type: 'message',
 				pseudo: securePseudo,
-				userId: userId,
+				userId: secureUserId,
 				message: secureMsg,
 				timestamp: Date.now()
 			});
 
 			console.log('==============');
-			console.log(gl_messages);
 		}
 	});
 
-	socket.on('newUser', function (datas) {
+	/*
+	** csNewUserNotif:
+	*/
+	socket.on('csNewUserNotif', function (datas) {
 		let securePseudo = secureString(socket.handshake.session.pseudo);
 
-		if (checkPseudo(securePseudo)) {
+		if (checkPseudo(securePseudo) === true) {
 			console.log('--> Nouvel User: [' + securePseudo + '](' + secureId(socket.handshake.session.userId) + ')');
 			if (checkLastTchatInOut(socket.handshake.session.lastTchatIn, 10000) === true) {
-				io.emit('newUser', { pseudo: securePseudo });
+				io.emit('ssNewUserNotif', { pseudo: securePseudo });
 			}
 
 			socket.handshake.session.lastTchatIn = Date.now();
@@ -129,13 +149,16 @@ io.sockets.on('connection', function (socket) {
 		}
 	});
 
+	/*
+	** disconnect:
+	*/
 	socket.on('disconnect', function (datas) {
 		let securePseudo = secureString(socket.handshake.session.pseudo);
 
 		if (checkPseudo(securePseudo)) {
 			console.log('Deconnection de ' + securePseudo);
 			if (checkLastTchatInOut(socket.handshake.session.lastTchatOut, 10000) === true) {
-				io.emit('leftUser', { pseudo: securePseudo });
+				io.emit('ssLeftUserNotif', { pseudo: securePseudo });
 			}
 
 			socket.handshake.session.lastTchatOut = Date.now();
@@ -143,8 +166,11 @@ io.sockets.on('connection', function (socket) {
 		}
 	});
 
-	socket.on('getLastMessages', function () {
-		socket.emit('sendsLastMessages', { messages: gl_messages } );
+	/*
+	** csGimmeLastMessages:
+	*/
+	socket.on('csGimmeLastMessages', function () {
+		socket.emit('ssLastMessages', { messages: gl_messages } );
 	});
 });
 
@@ -152,6 +178,10 @@ io.sockets.on('connection', function (socket) {
 /*******************/
 /**** FUNCTIONS ****/
 /*******************/
+
+/*
+** checkSession(): check if session.pseudo is defined and if its value is coherent
+*/
 function checkSession(req) {
 	if (typeof (req.session.pseudo) !== typeof('pouet')) {
 		return false;
@@ -160,43 +190,57 @@ function checkSession(req) {
 	return true;
 }
 
+/*
+** checkPseudo(): check if the string passed in arg is a valid pseudo String
+*/
 function checkPseudo(inputPseudo) {
 	if ((typeof (inputPseudo) === typeof ('pouet'))
-		&& (inputPseudo.trim() !== '')) {
+		&& (inputPseudo.trim() !== '')
+		&& (inputPseudo.length <= 30)) {
 		return true;
 	}
 
 	return false;
 }
 
+/*
+** checkMessage(): check if the String passed in arg is a valid message String
+*/
 function checkMessage(inputMessage) {
 	if ((typeof (inputMessage) === typeof ('pouet'))
-		&& (inputMessage.trim() !== '')) {
+		&& (inputMessage.trim() !== '')
+		&& (inputMessage.length <= 80)) {
 		return true;
 	}
 
 	return false;
 }
 
+/*
+** secureString(): secure the string to avoid xss, buffer overflows and other kind of things
+*/
 function secureString(str) {
 	return (entities.encode(str).trim());
 }
 
+/*
+** secureId(): to be sure that the id is coherent
+*/
 function secureId(pId) {
-	if (typeof (pId) === typeof (42)) {
+	if (typeof (pId) === typeof (42)
+		&& (pId >= 0)) {
 		return pId;
 	}
 
 	return -1;
 }
 
+/*
+** checkLastTchatInOut(): check if the timestamp pTime is older than the NOW timestamp for more than pTimeInterval
+*/
 function checkLastTchatInOut(pTime, pTimeInterval) {
 	let nowTime = Date.now();
 
-	/*
-	** if pTime is undefined,
-	** or if it is a timestamp and is older than 10 seconds from now
-	*/
 	if ((typeof (pTime) === 'undefined')
 		|| ((typeof (pTime) === typeof (nowTime))
 			&& ((nowTime - pTime) > pTimeInterval))) {
@@ -206,6 +250,9 @@ function checkLastTchatInOut(pTime, pTimeInterval) {
 	return false;
 }
 
+/*
+** updateGlMessages(): push_front the new message in gl_messages[30]
+*/
 function updateGlMessages(pushedMessage) {
 	gl_messages.unshift(pushedMessage);
 	gl_messages = gl_messages.slice(0, 30);

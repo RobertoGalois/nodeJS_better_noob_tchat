@@ -1,4 +1,3 @@
-- ameliorer le design, genre les couleurs de mes messages VS ceux des autres,
 - revoir la secu si tout est ok, genre tout retracer
 - commenter le code front et back
 - factoriser le front en differents fichiers et faire les routes dans le back en fonction
