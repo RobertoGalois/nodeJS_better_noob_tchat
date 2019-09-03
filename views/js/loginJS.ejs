@@ -1,0 +1,9 @@
+$(function () {
+	$('input#pseudo').select();
+
+	$('input#pseudo').on('keydown', function (e) {
+		if (e.which == 13) {
+			$('form#login').submit();
+		}
+	});
+});

@@ -1,0 +1,92 @@
+body {
+	font-family: verdana;
+	font-size: 1em;
+	margin: 0px;
+	padding: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+h1 {
+	text-decoration: underline;
+	font-size: 2em;
+	margin: 0px;
+}
+
+h2 {
+	text-decoration: underline;
+	font-size: 1.3em;
+}
+
+header {
+	background-color: azure;
+	border: black 1px dashed;
+	width: calc(100% - 42px);
+	height: 180px;
+	padding: 10px;
+	margin: 10px;
+}
+
+section#content {
+	background-color: lightblue;
+	border: black 1px solid;
+	width: calc(100% - 42px);
+    height: 350px;
+	overflow: auto;
+	padding: 10px;
+	margin: 10px;
+}
+
+input#message {
+	width: calc(100% - 15px);
+}
+
+
+section.showPseudo {
+	text-decoration: underline;
+	font-weight: bold;
+}
+
+section.showPseudo span {
+	font-weight: normal;
+	font-style: italic;
+}
+
+section.message {
+	width: 80%;
+	float: left;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+section.userMessage {
+	float: right;
+}
+
+section.userMessage section.showPseudo {
+	background-color: lightsteelblue;
+}
+
+section.userMessage section.showMessage {
+	background-color: lightcyan;
+}
+
+section.showMessage {
+	background-color: #b8ecf2;
+	border: black 1px dashed;
+	margin-top: 5px;
+	padding: 5px;
+}
+
+section.notification {
+	width: 100%;
+	float: left;
+	font-style:italic;
+}
+
+section.notification hr {
+	border: none;
+	color: black;
+	background-color: black;
+	height: 3px;
+}

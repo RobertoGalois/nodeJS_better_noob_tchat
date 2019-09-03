@@ -44,7 +44,7 @@ io.use(sharedSession(sessionMiddleware, {
 
 /**************************/
 /**** ROUTE management ****/
-/**************************/
+1/**************************/
 
 /*****/
 /* / */
@@ -53,17 +53,31 @@ app.get('/', (req, res) => {
 	res.status(200).setHeader('Content-Type', 'text/html');
 
 	if (checkSession(req)) {
-		res.render('index.ejs');
+		res.render('./html/indexHTML.ejs');
 	} else {
-		res.render('login.ejs');
+		res.render('./html/loginHTML.ejs');
 	}
+})
+/***************/
+/* /index.css  */
+/***************/
+.get('/index.css', (req, res) => {
+	res.status(200).setHeader('Content-Type', 'text/css');
+	res.render('./css/indexCSS.ejs');
+})
+/**************/
+/* /index.js  */
+/**************/
+.get('/index.js', (req, res) => {
+	res.status(200).setHeader('Content-Type', 'text/css');
+	res.render('./js/indexJS.ejs');
 })
 /***********/
 /* /jq.js  */
 /***********/
 .get('/jq.js', (req, res) => {
 	res.status(200).setHeader('Content-Type', 'application/javascript');
-	res.render('jq.ejs');
+	res.render('./js/jqJS.ejs');
 })
 /***********/
 /* /login  */
@@ -77,6 +91,20 @@ app.get('/', (req, res) => {
 	}
 
 	res.status(200).redirect('/');
+})
+/***************/
+/* /login.css  */
+/***************/
+.get('/login.css', (req, res) => {
+	res.status(200).setHeader('Content-Type', 'text/css');
+	res.render('./css/loginCSS.ejs');
+})
+/**************/
+/* /login.js  */
+/**************/
+.get('/login.js', (req, res) => {
+	res.status(200).setHeader('Content-Type', 'text/css');
+	res.render('./js/loginJS.ejs');
 })
 /**************/
 /* ELSE route */

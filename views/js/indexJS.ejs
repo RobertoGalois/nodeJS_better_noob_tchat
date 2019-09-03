@@ -1,0 +1,109 @@
+const socket = io();
+const messageInput = $('input#message');
+
+const static_getUserId = (function (pId) {
+	let myStaticVar = -1;
+
+	return function (pId) {
+		if(typeof (pId) === typeof (42)) {
+			myStaticVar = pId;
+		}
+
+		return (myStaticVar);
+	};
+})();
+
+function formatDateTime(value) {
+	value = parseInt(value);
+
+	if (value < 10) {
+		return ('0' + value);
+	}
+
+	return (value);
+}
+
+function genMsgElToPrepend(pDatas, pDate) {
+	return ($('<section class="message' + ((pDatas.userId === static_getUserId()) ? ' userMessage' : '')  +
+	'"><section class="showPseudo">[' +
+	pDatas.pseudo +
+	'] <span class="dateTime">(le ' +
+	formatDateTime(pDate.getDate()) +
+	'/' + formatDateTime((pDate.getMonth() + 1)) +
+	'/' + formatDateTime(pDate.getFullYear()) +
+	' à ' + formatDateTime(pDate.getHours()) +
+	'h' + formatDateTime(pDate.getMinutes()) +
+	')</span></section><section class="showMessage">' +
+	pDatas.message +
+	'</section></section>').hide(0));
+}
+
+function genNewUserNotifElToPrepend(pDatas) {
+	return ($('section#content').prepend($('<section class="notification"><hr />==> [' + pDatas.pseudo +
+	'] vient d\'arriver sur le tchat !<hr /></section>')));
+}
+
+function genLeftUserNotifElToPrepend(pDatas) {
+	return ($('section#content').prepend($('<section class="notification"><hr />==> [' + pDatas.pseudo +
+	'] a quitté le tchat !<hr /></section>')));
+}
+
+$(function () {
+	$('input#message').select();
+
+	messageInput.on('keydown', function (e) {
+	if (e.keyCode === 13) {
+	$('button#sendMessage').click();
+	}
+	});
+
+	$('button#sendMessage').click(function () {
+		socket.emit('csUserMessage', { message: $('input#message').val() });
+		messageInput.val('').select();
+	});
+
+	socket.on('ssNewMessage', function (datas) {
+		if (datas !== null) {
+			let nowDate = new Date();
+			let prependEl = genMsgElToPrepend(datas, nowDate);
+
+			$('section#content').prepend(prependEl);
+			prependEl.show(100);
+		}
+	});
+
+	socket.on('ssNewUserNotif', function (datas) {
+		let prependEl = genNewUserNotifElToPrepend(datas);
+
+		$('section#content').prepend(prependEl);
+	});
+
+	socket.on('ssLeftUserNotif', function (datas) {
+		let prependEl = genLeftUserNotifElToPrepend(datas);
+
+		$('section#content').prepend(prependEl);
+	});
+
+	socket.on('ssUserPseudo', function (datas) {
+		$('h2').append(datas.pseudo);
+		$('title').append(' - [' + datas.pseudo + ']');
+		static_getUserId(datas.userId);
+		socket.emit('csNewUserNotif');
+		socket.emit('csGimmeLastMessages');
+	});
+
+	socket.on('ssLastMessages', function (datas) {
+		let messages = datas.messages;
+
+		for (let i = 0; i < messages.length; i++) {
+			switch (messages[i].type) {
+				case 'message':
+					let msgDate = new Date(messages[i].timestamp);
+					let prependEl = genMsgElToPrepend(messages[i], msgDate);
+
+					$('section#content').append(prependEl.show(0));
+					break;
+			}
+		}
+	});
+});
