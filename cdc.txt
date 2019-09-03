@@ -1,5 +1,5 @@
-- factoriser le front en differents fichiers et faire les routes dans le back en fonction
-  - un fichier pour le css
-  - un fichier pour le JS
-  ==> reste a le faire pour login.ejs
+- faire en sorte que si on a redemarré le serveur, vu que les sessions sont reset, qu'on puisse pas voir les nouveaux messages
+  mais qu'a la place on voit que ya eu un probleme de connection et on refresh la page ou mieux on demande au user
+  de refresh la page
 
+- rendre le front responsive

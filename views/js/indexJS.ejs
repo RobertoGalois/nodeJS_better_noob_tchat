@@ -52,13 +52,23 @@ $(function () {
 	$('input#message').select();
 
 	messageInput.on('keydown', function (e) {
-	if (e.keyCode === 13) {
-	$('button#sendMessage').click();
-	}
+		if (e.keyCode === 13) {
+			$('button#sendMessage').click();
+		}
+	});
+
+	$('button#disconnection').click(function () {
+		console.log('ok');
+		window.location.href = '/disconnect';
 	});
 
 	$('button#sendMessage').click(function () {
-		socket.emit('csUserMessage', { message: $('input#message').val() });
+		inputMessage = $('input#message').val();
+
+		if (inputMessage.trim() !== '') {
+			socket.emit('csUserMessage', { message: inputMessage });
+		}
+
 		messageInput.val('').select();
 	});
 

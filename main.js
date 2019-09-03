@@ -69,7 +69,7 @@ app.get('/', (req, res) => {
 /* /index.js  */
 /**************/
 .get('/index.js', (req, res) => {
-	res.status(200).setHeader('Content-Type', 'text/css');
+	res.status(200).setHeader('Content-Type', 'application/javascript');
 	res.render('./js/indexJS.ejs');
 })
 /***********/
@@ -103,8 +103,16 @@ app.get('/', (req, res) => {
 /* /login.js  */
 /**************/
 .get('/login.js', (req, res) => {
-	res.status(200).setHeader('Content-Type', 'text/css');
+	res.status(200).setHeader('Content-Type', 'application/javascript');
 	res.render('./js/loginJS.ejs');
+})
+/*******************/
+/* /disconnect.js  */
+/*******************/
+.get('/disconnect', (req, res) => {
+	res.status(200).setHeader('Content-Type', 'text/html');
+	req.session.destroy();
+	res.redirect('/');
 })
 /**************/
 /* ELSE route */
